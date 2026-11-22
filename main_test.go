@@ -41,6 +41,8 @@ func TestRun(t *testing.T) {
 		{[]string{"--context", "docker", "--os", "macos", "143"}, 0, "docker: 143 = 128 + 15 (SIGTERM)"},
 		{[]string{"--context", "docker", "2"}, 0, "2: misuse"},
 		{[]string{"--context", "k8s", "137"}, 0, "k8s: 137 = 128 + 9 (SIGKILL)"},
+		{[]string{"--context", "curl", "7"}, 0, "curl: 7 (CURLE_COULDNT_CONNECT): failed to connect to the host\n"},
+		{[]string{"--context", "curl", "22"}, 0, "curl: 22 (CURLE_HTTP_RETURNED_ERROR)"},
 		{[]string{"--context", "nope", "1"}, 2, ""},
 		{[]string{"abc"}, 2, ""},
 		{[]string{}, 2, ""},

@@ -144,3 +144,12 @@ func TestContexts(t *testing.T) {
 		}
 	}
 }
+
+func TestCurlCoversOneToNinetyNine(t *testing.T) {
+	curl := mustLoad(t).Context("curl")
+	for code := 1; code <= 99; code++ {
+		if curl.find(code) == nil {
+			t.Errorf("curl %d missing", code)
+		}
+	}
+}
