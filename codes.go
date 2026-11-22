@@ -138,27 +138,95 @@ func (d *Data) Explain(code int, osName, context string) Explanation {
 			osName = ctx.OS
 		}
 	}
-	x := Explanation{Code: code, Context: context, OS: osName}
-	sig := d.signal(code-128, osName)
 	for _, t := range tables {
 		if e := t.find(code); e != nil {
-			x.Source, x.Name, x.Meaning, x.Hints = t.ID, e.Name, e.Meaning, e.Hints
-			if e.Signal && sig != nil {
-				x.Signal = &SignalRef{Number: code - 128, Name: sig.Name}
-			}
+			x := d.fromEntry(&t, e, osName)
+			x.Context = context
 			return x
 		}
 	}
-	if sig != nil {
-		x.Source, x.Meaning, x.Hints = "signal", sig.Meaning, sig.Hints
-		x.Signal = &SignalRef{Number: code - 128, Name: sig.Name}
+	if sig := d.signal(code-128, osName); sig != nil {
+		x := fromSignal(sig, osName)
+		x.Context = context
 		return x
 	}
-	x.Source = "unknown"
-	x.Meaning = "no standard meaning; the program defines it"
-	x.Hints = []string{"Check the program's documentation or search its source for the code."}
+	x := Explanation{
+		Code:    code,
+		Source:  "unknown",
+		Context: context,
+		OS:      osName,
+		Meaning: "no standard meaning; the program defines it",
+		Hints:   []string{"Check the program's documentation or search its source for the code."},
+	}
 	if code > 128 {
 		x.Hints = append(x.Hints, fmt.Sprintf("If it came from a signal, %d is not a known signal number on %s.", code-128, osName))
 	}
 	return x
+}
+
+// List returns every known code: the general tables, the signals and
+// the contexts, or only one context if given.
+func (d *Data) List(osName, context string) []Explanation {
+	var list []Explanation
+	add := func(t *Table, osName string) {
+		if t.OS != "" {
+			osName = t.OS
+		}
+		for i := range t.Codes {
+			x := d.fromEntry(t, &t.Codes[i], osName)
+			if d.Context(t.ID) != nil {
+				x.Context = t.ID
+			}
+			list = append(list, x)
+		}
+	}
+	if ctx := d.Context(context); ctx != nil {
+		add(ctx, osName)
+		return list
+	}
+	for i := range d.Tables {
+		add(&d.Tables[i], osName)
+	}
+	for n := 1; n <= 31; n++ {
+		if sig := d.signal(n, osName); sig != nil {
+			list = append(list, fromSignal(sig, osName))
+		}
+	}
+	for i := range d.Contexts {
+		add(&d.Contexts[i], osName)
+	}
+	return list
+}
+
+func (d *Data) fromEntry(t *Table, e *Entry, osName string) Explanation {
+	x := Explanation{Code: e.Code, Source: t.ID, OS: osName, Name: e.Name, Meaning: e.Meaning, Hints: e.Hints}
+	if sig := d.signal(e.Code-128, osName); e.Signal && sig != nil {
+		x.Signal = &SignalRef{Number: e.Code - 128, Name: sig.Name}
+	}
+	return x
+}
+
+func fromSignal(s *Signal, osName string) Explanation {
+	n := s.number(osName)
+	return Explanation{
+		Code:    128 + n,
+		Source:  "signal",
+		OS:      osName,
+		Signal:  &SignalRef{Number: n, Name: s.Name},
+		Meaning: s.Meaning,
+		Hints:   s.Hints,
+	}
+}
+
+// Title returns the display title of a table id.
+func (d *Data) Title(id string) string {
+	if id == "signal" {
+		return "Signals (128+N)"
+	}
+	for _, t := range append(d.Tables, d.Contexts...) {
+		if t.ID == id {
+			return t.Title
+		}
+	}
+	return id
 }

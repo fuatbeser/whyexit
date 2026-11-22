@@ -79,3 +79,28 @@ func TestRunJSON(t *testing.T) {
 		t.Error("no hints")
 	}
 }
+
+func TestRunList(t *testing.T) {
+	out, _, status := runCLI("--list", "--os", "linux")
+	if status != 0 {
+		t.Fatalf("status = %d", status)
+	}
+	for _, want := range []string{"Shell\n", "BSD sysexits.h\n", "Signals (128+N)\n", "curl (--context curl)\n", "137  SIGKILL", "64  EX_USAGE"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("list is missing %q", want)
+		}
+	}
+
+	out, _, _ = runCLI("--list", "--context", "ssh", "--json")
+	var list []Explanation
+	if err := json.Unmarshal([]byte(out), &list); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(mustLoad(t).Context("ssh").Codes); len(list) != n {
+		t.Errorf("got %d ssh entries, want %d", len(list), n)
+	}
+
+	if _, _, status := runCLI("--list", "1"); status != 2 {
+		t.Errorf("--list with a code: status = %d, want 2", status)
+	}
+}

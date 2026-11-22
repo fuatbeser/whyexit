@@ -9,9 +9,11 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 )
 
 const usage = `usage: whyexit [flags] CODE
+       whyexit --list [--context NAME]
 
 Explains a process exit code in plain English.
 
@@ -34,6 +36,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	osName := fs.String("os", defaultOS(), "signal numbering to use: linux or macos")
 	context := fs.String("context", "", "tool the code came from: "+strings.Join(data.ContextIDs(), ", "))
 	asJSON := fs.Bool("json", false, "print JSON")
+	list := fs.Bool("list", false, "list all known codes")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, usage)
 		fs.PrintDefaults()
@@ -49,6 +52,18 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if *context != "" && data.Context(*context) == nil {
 		fmt.Fprintf(stderr, "whyexit: unknown --context %q (want %s)\n", *context, strings.Join(data.ContextIDs(), ", "))
 		return 2
+	}
+	if *list {
+		if len(pos) != 0 {
+			fs.Usage()
+			return 2
+		}
+		all := data.List(*osName, *context)
+		if *asJSON {
+			return writeJSON(stdout, stderr, all)
+		}
+		printList(stdout, data, all)
+		return 0
 	}
 	if len(pos) != 1 {
 		fs.Usage()
@@ -93,6 +108,31 @@ func writeJSON(stdout, stderr io.Writer, v any) int {
 		return 1
 	}
 	return 0
+}
+
+func printList(w io.Writer, data *Data, list []Explanation) {
+	tw := tabwriter.NewWriter(w, 0, 0, 2, ' ', 0)
+	source := ""
+	for _, x := range list {
+		if x.Source != source {
+			if source != "" {
+				tw.Flush()
+				fmt.Fprintln(w)
+			}
+			source = x.Source
+			title := data.Title(source)
+			if x.Context != "" {
+				title += " (--context " + x.Context + ")"
+			}
+			fmt.Fprintln(tw, title)
+		}
+		name := x.Name
+		if x.Signal != nil {
+			name = x.Signal.Name
+		}
+		fmt.Fprintf(tw, "  %d\t%s\t%s\n", x.Code, name, x.Meaning)
+	}
+	tw.Flush()
 }
 
 func headline(x Explanation) string {
