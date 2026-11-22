@@ -17,14 +17,20 @@ func main() {
 func run(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("whyexit", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	osName := fs.String("os", defaultOS(), "signal numbering to use: linux or macos")
 	fs.Usage = func() {
-		fmt.Fprintln(stderr, "usage: whyexit CODE")
+		fmt.Fprintln(stderr, "usage: whyexit [flags] CODE")
+		fs.PrintDefaults()
 	}
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
 	if fs.NArg() != 1 {
 		fs.Usage()
+		return 2
+	}
+	if *osName != "linux" && *osName != "macos" {
+		fmt.Fprintf(stderr, "whyexit: unknown --os %q (want linux or macos)\n", *osName)
 		return 2
 	}
 	code, err := strconv.Atoi(fs.Arg(0))
@@ -38,14 +44,16 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "whyexit:", err)
 		return 1
 	}
-	fmt.Fprint(stdout, format(data.Explain(code)))
+	fmt.Fprint(stdout, format(data.Explain(code, *osName)))
 	return 0
 }
 
 func headline(x Explanation) string {
 	var b strings.Builder
 	b.WriteString(strconv.Itoa(x.Code))
-	if x.Name != "" {
+	if x.Signal != nil {
+		fmt.Fprintf(&b, " = 128 + %d (%s)", x.Signal.Number, x.Signal.Name)
+	} else if x.Name != "" {
 		fmt.Fprintf(&b, " (%s)", x.Name)
 	}
 	b.WriteString(": ")

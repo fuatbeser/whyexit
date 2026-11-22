@@ -24,6 +24,12 @@ func TestRun(t *testing.T) {
 		{[]string{"127"}, 0, "127: command not found\n"},
 		{[]string{"1"}, 0, "1: general error"},
 		{[]string{"42"}, 0, "42: no standard meaning"},
+		{[]string{"137"}, 0, "137 = 128 + 9 (SIGKILL): killed by force, often by the OOM killer\n"},
+		{[]string{"130"}, 0, "130 = 128 + 2 (SIGINT): interrupted with Ctrl+C\n"},
+		{[]string{"--os", "linux", "138"}, 0, "138 = 128 + 10 (SIGUSR1)"},
+		{[]string{"--os", "macos", "138"}, 0, "138 = 128 + 10 (SIGBUS)"},
+		{[]string{"--os", "windows", "1"}, 2, ""},
+		{[]string{"200"}, 0, "200: no standard meaning"},
 		{[]string{"abc"}, 2, ""},
 		{[]string{}, 2, ""},
 	}

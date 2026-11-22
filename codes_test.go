@@ -43,7 +43,7 @@ func TestTables(t *testing.T) {
 					t.Fatalf("duplicate code %d", e.Code)
 				}
 				seen[e.Code] = true
-				x := d.Explain(e.Code)
+				x := d.Explain(e.Code, "linux")
 				if x.Source != tbl.ID || x.Meaning != e.Meaning {
 					t.Errorf("Explain(%d) = %s %q, want %s %q", e.Code, x.Source, x.Meaning, tbl.ID, e.Meaning)
 				}
@@ -53,8 +53,61 @@ func TestTables(t *testing.T) {
 }
 
 func TestUnknown(t *testing.T) {
-	x := mustLoad(t).Explain(42)
+	x := mustLoad(t).Explain(42, "linux")
 	if x.Source != "unknown" || len(x.Hints) == 0 {
 		t.Errorf("got %+v", x)
+	}
+}
+
+func TestSignals(t *testing.T) {
+	d := mustLoad(t)
+	names := map[string]bool{}
+	for _, s := range d.Signals {
+		t.Run(s.Name, func(t *testing.T) {
+			if names[s.Name] {
+				t.Fatal("duplicate signal")
+			}
+			names[s.Name] = true
+			checkEntry(t, Entry{Code: 128 + s.Linux + s.MacOS, Meaning: s.Meaning, Hints: s.Hints})
+			for _, osName := range []string{"linux", "macos"} {
+				n := s.number(osName)
+				if n == 0 {
+					continue
+				}
+				if n < 1 || n > 31 {
+					t.Fatalf("%s number %d out of range", osName, n)
+				}
+				if got := d.signal(n, osName); got == nil || got.Name != s.Name {
+					t.Errorf("%s: signal %d resolves to %v", osName, n, got)
+				}
+				x := d.Explain(128+n, osName)
+				if x.Signal == nil || x.Signal.Name != s.Name {
+					t.Errorf("%s: Explain(%d) signal = %v, want %s", osName, 128+n, x.Signal, s.Name)
+				}
+			}
+		})
+	}
+}
+
+func TestSignalNumbersDiffer(t *testing.T) {
+	d := mustLoad(t)
+	tests := []struct {
+		code       int
+		linux, mac string
+	}{
+		{135, "SIGBUS", "SIGEMT"},
+		{138, "SIGUSR1", "SIGBUS"},
+		{140, "SIGUSR2", "SIGSYS"},
+		{146, "SIGCONT", "SIGTSTP"},
+		{148, "SIGTSTP", "SIGCHLD"},
+		{159, "SIGSYS", "SIGUSR2"},
+	}
+	for _, tt := range tests {
+		for osName, want := range map[string]string{"linux": tt.linux, "macos": tt.mac} {
+			x := d.Explain(tt.code, osName)
+			if x.Signal == nil || x.Signal.Name != want {
+				t.Errorf("%s %d: got %v, want %s", osName, tt.code, x.Signal, want)
+			}
+		}
 	}
 }
