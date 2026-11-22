@@ -50,6 +50,7 @@ func TestRun(t *testing.T) {
 		{[]string{"--context", "npm", "134"}, 0, "npm: 134 = 128 + 6 (SIGABRT): node aborted"},
 		{[]string{"--context", "ssh", "255"}, 0, "ssh: 255: ssh itself failed"},
 		{[]string{"--context", "nope", "1"}, 2, ""},
+		{[]string{"--version"}, 0, "whyexit dev\n"},
 		{[]string{"abc"}, 2, ""},
 		{[]string{}, 2, ""},
 	}

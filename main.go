@@ -21,6 +21,9 @@ Explains a process exit code in plain English.
 flags:
 `
 
+// version is set at build time by the release tooling.
+var version = "dev"
+
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
@@ -46,6 +49,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 	context := fs.String("context", "", "tool the code came from: "+strings.Join(data.ContextIDs(), ", "))
 	asJSON := fs.Bool("json", false, "print JSON")
 	list := fs.Bool("list", false, "list all known codes")
+	showVersion := fs.Bool("version", false, "print the version")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, usage)
 		fs.PrintDefaults()
@@ -61,6 +65,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if *context != "" && data.Context(*context) == nil {
 		fmt.Fprintf(stderr, "whyexit: unknown --context %q (want %s)\n", *context, strings.Join(data.ContextIDs(), ", "))
 		return 2
+	}
+	if *showVersion {
+		fmt.Fprintln(stdout, "whyexit", version)
+		return 0
 	}
 	if *list {
 		if len(pos) != 0 {
