@@ -13,6 +13,27 @@
         {"code": 130, "signal": true, "meaning": "interrupted with Ctrl+C", "hints": ["Nothing failed by itself; the command was stopped from the keyboard."]},
         {"code": 255, "meaning": "exit status out of range, often from `exit -1`", "hints": ["The program called exit with a negative or too-large value; check its logs.", "If it came from ssh, use `whyexit --context ssh 255`."]}
       ]
+    },
+    {
+      "id": "sysexits",
+      "title": "BSD sysexits.h",
+      "codes": [
+        {"code": 64, "name": "EX_USAGE", "meaning": "command line usage error", "hints": ["Check the arguments against the command's usage text."]},
+        {"code": 65, "name": "EX_DATAERR", "meaning": "input data was malformed", "hints": ["Validate the input file or stdin the command was given."]},
+        {"code": 66, "name": "EX_NOINPUT", "meaning": "an input file did not exist or was not readable", "hints": ["Check the path and its read permissions."]},
+        {"code": 67, "name": "EX_NOUSER", "meaning": "the user or addressee is unknown", "hints": ["Check the user name, for example with `id <user>`."]},
+        {"code": 68, "name": "EX_NOHOST", "meaning": "the host name is unknown", "hints": ["Check the host name and DNS with `host <name>` or `dig <name>`."]},
+        {"code": 69, "name": "EX_UNAVAILABLE", "meaning": "a required service is unavailable", "hints": ["Check that the service it depends on is running and reachable."]},
+        {"code": 70, "name": "EX_SOFTWARE", "meaning": "internal software error", "hints": ["This is a bug in the program; report it with the stderr output."]},
+        {"code": 71, "name": "EX_OSERR", "meaning": "operating system error, such as being unable to fork", "hints": ["Check process limits (`ulimit -u`) and free memory."]},
+        {"code": 72, "name": "EX_OSFILE", "meaning": "a system file is missing or broken", "hints": ["Check files like /etc/passwd or /etc/hosts that the program reads."]},
+        {"code": 73, "name": "EX_CANTCREAT", "meaning": "an output file could not be created", "hints": ["Check that the target directory exists and is writable."]},
+        {"code": 74, "name": "EX_IOERR", "meaning": "input/output error", "hints": ["Check for a full disk, a failing device or a dropped network mount."]},
+        {"code": 75, "name": "EX_TEMPFAIL", "meaning": "temporary failure; retrying later may work", "hints": ["Retry, ideally with backoff."]},
+        {"code": 76, "name": "EX_PROTOCOL", "meaning": "the remote side broke the protocol", "hints": ["Check that client and server versions are compatible."]},
+        {"code": 77, "name": "EX_NOPERM", "meaning": "permission denied", "hints": ["Check file permissions and which user the command runs as."]},
+        {"code": 78, "name": "EX_CONFIG", "meaning": "configuration error", "hints": ["Check the program's configuration file for typos or missing keys."]}
+      ]
     }
   ],
   "signals": [

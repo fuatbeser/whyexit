@@ -30,6 +30,8 @@ func TestRun(t *testing.T) {
 		{[]string{"--os", "macos", "138"}, 0, "138 = 128 + 10 (SIGBUS)"},
 		{[]string{"--os", "windows", "1"}, 2, ""},
 		{[]string{"200"}, 0, "200: no standard meaning"},
+		{[]string{"64"}, 0, "64 (EX_USAGE): command line usage error\n"},
+		{[]string{"78"}, 0, "78 (EX_CONFIG): configuration error\n"},
 		{[]string{"abc"}, 2, ""},
 		{[]string{}, 2, ""},
 	}
