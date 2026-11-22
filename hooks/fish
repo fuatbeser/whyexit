@@ -1,0 +1,11 @@
+# whyexit hook for fish. Load it with: whyexit init fish | source
+
+function __whyexit_postexec --on-event fish_postexec
+    set -l code $status
+    switch $code
+        case 0{{range .Skip}} {{.}}{{end}}
+        case '*'
+            command whyexit hint $code "$argv[1]"
+    end
+    return $code
+end

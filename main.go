@@ -14,6 +14,7 @@ import (
 
 const usage = `usage: whyexit [flags] CODE
        whyexit --list [--context NAME]
+       whyexit init [--show-interrupt] bash|fish|zsh
 
 Explains a process exit code in plain English.
 
@@ -29,6 +30,14 @@ func run(args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		fmt.Fprintln(stderr, "whyexit:", err)
 		return 1
+	}
+	if len(args) > 0 {
+		switch args[0] {
+		case "init":
+			return runInit(data, args[1:], stdout, stderr)
+		case "hint":
+			return runHint(data, args[1:], stderr)
+		}
 	}
 
 	fs := flag.NewFlagSet("whyexit", flag.ContinueOnError)
@@ -136,10 +145,15 @@ func printList(w io.Writer, data *Data, list []Explanation) {
 }
 
 func headline(x Explanation) string {
-	var b strings.Builder
 	if x.Context != "" && x.Source == x.Context {
-		b.WriteString(x.Context + ": ")
+		return x.Context + ": " + describe(x)
 	}
+	return describe(x)
+}
+
+// describe renders the code and its meaning, without the context.
+func describe(x Explanation) string {
+	var b strings.Builder
 	b.WriteString(strconv.Itoa(x.Code))
 	if x.Signal != nil {
 		fmt.Fprintf(&b, " = 128 + %d (%s)", x.Signal.Number, x.Signal.Name)

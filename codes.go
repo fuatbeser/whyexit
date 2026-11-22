@@ -25,6 +25,8 @@ type Entry struct {
 type Table struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
+	// Commands are the program names the shell hook maps to this context.
+	Commands []string `json:"commands,omitempty"`
 	// OS fixes the signal numbering, e.g. containers always run Linux.
 	OS    string  `json:"os,omitempty"`
 	Codes []Entry `json:"codes"`
@@ -98,6 +100,15 @@ func (d *Data) signal(n int, osName string) *Signal {
 		}
 	}
 	return nil
+}
+
+func (d *Data) signalNumber(name, osName string) int {
+	for i := range d.Signals {
+		if d.Signals[i].Name == name {
+			return d.Signals[i].number(osName)
+		}
+	}
+	return 0
 }
 
 func (t *Table) find(code int) *Entry {

@@ -1,0 +1,22 @@
+# whyexit hook for zsh. Load it with: eval "$(whyexit init zsh)"
+
+_whyexit_preexec() {
+  _whyexit_cmd=$1
+}
+
+_whyexit_precmd() {
+  local code=$? cmd=$_whyexit_cmd
+  _whyexit_cmd=
+  # No preexec means no command ran, e.g. Enter on an empty line.
+  [[ -n $cmd ]] || return $code
+  case $code in
+    0{{range .Skip}}|{{.}}{{end}}) ;;
+    *) command whyexit hint "$code" "$cmd" ;;
+  esac
+  return $code
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook preexec _whyexit_preexec
+# Run first, so the status is read before other hooks can change it.
+precmd_functions=(_whyexit_precmd ${precmd_functions:#_whyexit_precmd})

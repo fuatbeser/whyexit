@@ -40,6 +40,7 @@
     {
       "id": "docker",
       "title": "Docker",
+      "commands": ["docker", "podman"],
       "os": "linux",
       "codes": [
         {"code": 1, "meaning": "the container's main process exited with an error", "hints": ["Read its output with `docker logs <container>`."]},
@@ -54,6 +55,7 @@
     {
       "id": "k8s",
       "title": "Kubernetes",
+      "commands": ["kubectl"],
       "os": "linux",
       "codes": [
         {"code": 1, "meaning": "the container's process exited with an error", "hints": ["Read the logs of the failed run with `kubectl logs <pod> --previous`."]},
@@ -68,6 +70,7 @@
     {
       "id": "curl",
       "title": "curl",
+      "commands": ["curl"],
       "codes": [
         {"code": 1, "name": "CURLE_UNSUPPORTED_PROTOCOL", "meaning": "the URL's scheme is not supported by this curl build", "hints": ["Check the URL for a typo like `htp://`; `curl -V` lists supported protocols."]},
         {"code": 2, "name": "CURLE_FAILED_INIT", "meaning": "curl failed to initialize", "hints": ["Usually a broken install or a bad option combination; check `curl -V`."]},
@@ -173,6 +176,7 @@
     {
       "id": "git",
       "title": "git",
+      "commands": ["git"],
       "codes": [
         {"code": 1, "meaning": "generic failure, or \"differences found\" from `git diff --exit-code` and `--quiet`", "hints": ["For diff and grep commands, 1 is an answer, not an error.", "Otherwise read the message git printed above."]},
         {"code": 128, "meaning": "fatal error: git could not continue", "hints": ["Read the `fatal:` line: often not a repository, a bad ref, or failed authentication.", "For remote problems, rerun with `GIT_TRACE=1 GIT_CURL_VERBOSE=1`."]},
@@ -182,6 +186,7 @@
     {
       "id": "npm",
       "title": "npm and node",
+      "commands": ["npm", "npx", "node", "yarn", "pnpm"],
       "codes": [
         {"code": 1, "meaning": "the script or npm itself failed", "hints": ["Scroll up past the npm error lines to the first error from the script.", "Full logs are in ~/.npm/_logs/."]},
         {"code": 9, "meaning": "node: invalid argument, such as an unknown option or a flag missing its value", "hints": ["Check the flags passed to node, including NODE_OPTIONS."]},
@@ -194,6 +199,7 @@
     {
       "id": "ssh",
       "title": "ssh",
+      "commands": ["ssh"],
       "codes": [
         {"code": 1, "meaning": "the remote command failed; ssh passes its exit status through", "hints": ["Run the command on the remote host to see its error."]},
         {"code": 127, "meaning": "the remote command was not found on the remote PATH", "hints": ["Non-interactive ssh sessions may skip your profile; use the full path or `bash -lc '...'`."]},

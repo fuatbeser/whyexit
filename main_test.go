@@ -3,12 +3,15 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 )
 
 func itoa(n int) string { return strconv.Itoa(n) }
+
+var sprintf = fmt.Sprintf
 
 func runCLI(args ...string) (stdout, stderr string, status int) {
 	var out, errb bytes.Buffer
