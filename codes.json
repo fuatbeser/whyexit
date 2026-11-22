@@ -169,6 +169,36 @@
         {"code": 98, "name": "CURLE_SSL_CLIENTCERT", "meaning": "the server wanted a client certificate and did not accept the one sent", "hints": ["Check the files given to `--cert` and `--key`."]},
         {"code": 99, "name": "CURLE_UNRECOVERABLE_POLL", "meaning": "waiting on the socket failed and cannot recover", "hints": ["Retry; if it persists, check system limits on open files."]}
       ]
+    },
+    {
+      "id": "git",
+      "title": "git",
+      "codes": [
+        {"code": 1, "meaning": "generic failure, or \"differences found\" from `git diff --exit-code` and `--quiet`", "hints": ["For diff and grep commands, 1 is an answer, not an error.", "Otherwise read the message git printed above."]},
+        {"code": 128, "meaning": "fatal error: git could not continue", "hints": ["Read the `fatal:` line: often not a repository, a bad ref, or failed authentication.", "For remote problems, rerun with `GIT_TRACE=1 GIT_CURL_VERBOSE=1`."]},
+        {"code": 129, "meaning": "usage error: an unknown option or bad arguments", "hints": ["Check the options with `git help <command>`."]}
+      ]
+    },
+    {
+      "id": "npm",
+      "title": "npm and node",
+      "codes": [
+        {"code": 1, "meaning": "the script or npm itself failed", "hints": ["Scroll up past the npm error lines to the first error from the script.", "Full logs are in ~/.npm/_logs/."]},
+        {"code": 9, "meaning": "node: invalid argument, such as an unknown option or a flag missing its value", "hints": ["Check the flags passed to node, including NODE_OPTIONS."]},
+        {"code": 12, "meaning": "node: invalid `--inspect` host or port", "hints": ["Pick a free port for `--inspect`."]},
+        {"code": 13, "meaning": "node: a top-level `await` never settled", "hints": ["Look for a top-level await on a promise that never resolves or rejects."]},
+        {"code": 127, "meaning": "a command in the npm script was not found", "hints": ["Run `npm install`; tools in node_modules/.bin must be installed first.", "Check the spelling of the command in package.json \"scripts\"."]},
+        {"code": 134, "signal": true, "meaning": "node aborted, most often with \"JavaScript heap out of memory\"", "hints": ["Raise the heap with `NODE_OPTIONS=--max-old-space-size=4096`, or look for a leak."]}
+      ]
+    },
+    {
+      "id": "ssh",
+      "title": "ssh",
+      "codes": [
+        {"code": 1, "meaning": "the remote command failed; ssh passes its exit status through", "hints": ["Run the command on the remote host to see its error."]},
+        {"code": 127, "meaning": "the remote command was not found on the remote PATH", "hints": ["Non-interactive ssh sessions may skip your profile; use the full path or `bash -lc '...'`."]},
+        {"code": 255, "meaning": "ssh itself failed: connection, host key or authentication error", "hints": ["Rerun with `ssh -v` to see where it stopped.", "Check the host, port, key and known_hosts entry."]}
+      ]
     }
   ],
   "signals": [
