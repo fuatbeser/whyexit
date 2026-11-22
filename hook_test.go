@@ -112,7 +112,8 @@ func TestHookBehavior(t *testing.T) {
 				t.Run(tt.name, func(t *testing.T) {
 					src := sprintf(run[shell], tt.flag, tt.cmdline, tt.code)
 					cmd := exec.Command(bin, "-c", src)
-					cmd.Env = append(os.Environ(), "WHYEXIT_TEST_MAIN=1", "NO_COLOR=1")
+					// GORACE keeps -race builds from sleeping a second on exit.
+					cmd.Env = append(os.Environ(), "WHYEXIT_TEST_MAIN=1", "NO_COLOR=1", "GORACE=atexit_sleep_ms=0")
 					var stderr strings.Builder
 					cmd.Stderr = &stderr
 					out, err := cmd.Output()
