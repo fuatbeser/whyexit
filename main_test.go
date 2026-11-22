@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"strconv"
 	"strings"
 	"testing"
@@ -32,6 +33,10 @@ func TestRun(t *testing.T) {
 		{[]string{"200"}, 0, "200: no standard meaning"},
 		{[]string{"64"}, 0, "64 (EX_USAGE): command line usage error\n"},
 		{[]string{"78"}, 0, "78 (EX_CONFIG): configuration error\n"},
+		{[]string{"256"}, 0, "0: success\n  Note: exit statuses are 8 bits, so 256 is seen as 0.\n"},
+		{[]string{"--", "-1"}, 0, "255: exit status out of range"},
+		{[]string{"127", "--os", "macos"}, 0, "127: command not found"},
+		{[]string{"1", "2"}, 2, ""},
 		{[]string{"abc"}, 2, ""},
 		{[]string{}, 2, ""},
 	}
@@ -45,5 +50,22 @@ func TestRun(t *testing.T) {
 				t.Errorf("output = %q, want prefix %q", out, tt.want)
 			}
 		})
+	}
+}
+
+func TestRunJSON(t *testing.T) {
+	out, _, status := runCLI("137", "--json", "--os", "linux")
+	if status != 0 {
+		t.Fatalf("status = %d", status)
+	}
+	var x Explanation
+	if err := json.Unmarshal([]byte(out), &x); err != nil {
+		t.Fatal(err)
+	}
+	if x.Code != 137 || x.Source != "signal" || x.OS != "linux" || x.Signal == nil || x.Signal.Name != "SIGKILL" || x.Signal.Number != 9 {
+		t.Errorf("got %+v", x)
+	}
+	if len(x.Hints) == 0 {
+		t.Error("no hints")
 	}
 }

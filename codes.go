@@ -59,6 +59,7 @@ type Explanation struct {
 	Signal  *SignalRef `json:"signal,omitempty"`
 	Meaning string     `json:"meaning"`
 	Hints   []string   `json:"hints"`
+	Note    string     `json:"note,omitempty"`
 }
 
 func loadData() (*Data, error) {
