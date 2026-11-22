@@ -1,0 +1,17 @@
+{
+  "tables": [
+    {
+      "id": "shell",
+      "title": "Shell",
+      "codes": [
+        {"code": 0, "meaning": "success", "hints": ["Nothing to fix."]},
+        {"code": 1, "meaning": "general error; the program failed and chose the most generic code", "hints": ["Read the program's stderr; 1 alone carries no detail.", "For grep, diff and test, 1 just means \"no match\" or \"false\"."]},
+        {"code": 2, "meaning": "misuse: bad arguments, a shell syntax error, or a builtin used wrongly", "hints": ["Check the flags against `<command> --help`.", "For grep and diff, 2 means a real error such as a missing file."]},
+        {"code": 124, "meaning": "timed out: `timeout` killed the command after its time limit", "hints": ["Raise the limit given to `timeout`, or find out why the command hangs."]},
+        {"code": 126, "meaning": "found but not executable: permission denied or not a valid binary", "hints": ["Run `chmod +x <file>` or check the shebang line.", "A binary built for another OS or CPU also ends up here."]},
+        {"code": 127, "meaning": "command not found", "hints": ["Check the spelling and that the directory is on $PATH.", "In scripts, a missing dependency or a wrong shebang path often causes this."]},
+        {"code": 255, "meaning": "exit status out of range, often from `exit -1`", "hints": ["The program called exit with a negative or too-large value; check its logs.", "If it came from ssh, use `whyexit --context ssh 255`."]}
+      ]
+    }
+  ]
+}
