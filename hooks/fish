@@ -2,6 +2,8 @@
 
 function __whyexit_postexec --on-event fish_postexec
     set -l code $status
+    # fish fires postexec for `exit` too, just before the shell quits.
+    string match -qr '^\s*exit\b' -- $argv[1]; and return $code
     switch $code
         case 0{{range .Skip}} {{.}}{{end}}
         case '*'
