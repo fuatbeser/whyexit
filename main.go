@@ -23,9 +23,16 @@ func main() {
 }
 
 func run(args []string, stdout, stderr io.Writer) int {
+	data, err := loadData()
+	if err != nil {
+		fmt.Fprintln(stderr, "whyexit:", err)
+		return 1
+	}
+
 	fs := flag.NewFlagSet("whyexit", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	osName := fs.String("os", defaultOS(), "signal numbering to use: linux or macos")
+	context := fs.String("context", "", "tool the code came from: "+strings.Join(data.ContextIDs(), ", "))
 	asJSON := fs.Bool("json", false, "print JSON")
 	fs.Usage = func() {
 		fmt.Fprint(stderr, usage)
@@ -39,6 +46,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "whyexit: unknown --os %q (want linux or macos)\n", *osName)
 		return 2
 	}
+	if *context != "" && data.Context(*context) == nil {
+		fmt.Fprintf(stderr, "whyexit: unknown --context %q (want %s)\n", *context, strings.Join(data.ContextIDs(), ", "))
+		return 2
+	}
 	if len(pos) != 1 {
 		fs.Usage()
 		return 2
@@ -48,13 +59,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "whyexit: %q is not a number\n", pos[0])
 		return 2
 	}
-
-	data, err := loadData()
-	if err != nil {
-		fmt.Fprintln(stderr, "whyexit:", err)
-		return 1
-	}
-	x := data.Explain(code&0xff, *osName)
+	x := data.Explain(code&0xff, *osName, *context)
 	if code < 0 || code > 255 {
 		x.Note = fmt.Sprintf("exit statuses are 8 bits, so %d is seen as %d", code, code&0xff)
 	}
@@ -92,6 +97,9 @@ func writeJSON(stdout, stderr io.Writer, v any) int {
 
 func headline(x Explanation) string {
 	var b strings.Builder
+	if x.Context != "" && x.Source == x.Context {
+		b.WriteString(x.Context + ": ")
+	}
 	b.WriteString(strconv.Itoa(x.Code))
 	if x.Signal != nil {
 		fmt.Fprintf(&b, " = 128 + %d (%s)", x.Signal.Number, x.Signal.Name)

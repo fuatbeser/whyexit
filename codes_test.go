@@ -43,7 +43,7 @@ func TestTables(t *testing.T) {
 					t.Fatalf("duplicate code %d", e.Code)
 				}
 				seen[e.Code] = true
-				x := d.Explain(e.Code, "linux")
+				x := d.Explain(e.Code, "linux", "")
 				if x.Source != tbl.ID || x.Meaning != e.Meaning {
 					t.Errorf("Explain(%d) = %s %q, want %s %q", e.Code, x.Source, x.Meaning, tbl.ID, e.Meaning)
 				}
@@ -53,7 +53,7 @@ func TestTables(t *testing.T) {
 }
 
 func TestUnknown(t *testing.T) {
-	x := mustLoad(t).Explain(42, "linux")
+	x := mustLoad(t).Explain(42, "linux", "")
 	if x.Source != "unknown" || len(x.Hints) == 0 {
 		t.Errorf("got %+v", x)
 	}
@@ -80,7 +80,7 @@ func TestSignals(t *testing.T) {
 				if got := d.signal(n, osName); got == nil || got.Name != s.Name {
 					t.Errorf("%s: signal %d resolves to %v", osName, n, got)
 				}
-				x := d.Explain(128+n, osName)
+				x := d.Explain(128+n, osName, "")
 				if x.Signal == nil || x.Signal.Name != s.Name {
 					t.Errorf("%s: Explain(%d) signal = %v, want %s", osName, 128+n, x.Signal, s.Name)
 				}
@@ -104,10 +104,43 @@ func TestSignalNumbersDiffer(t *testing.T) {
 	}
 	for _, tt := range tests {
 		for osName, want := range map[string]string{"linux": tt.linux, "macos": tt.mac} {
-			x := d.Explain(tt.code, osName)
+			x := d.Explain(tt.code, osName, "")
 			if x.Signal == nil || x.Signal.Name != want {
 				t.Errorf("%s %d: got %v, want %s", osName, tt.code, x.Signal, want)
 			}
+		}
+	}
+}
+
+func TestContexts(t *testing.T) {
+	d := mustLoad(t)
+	ids := map[string]bool{}
+	for _, ctx := range d.Contexts {
+		if ids[ctx.ID] {
+			t.Fatalf("duplicate context %s", ctx.ID)
+		}
+		ids[ctx.ID] = true
+		if ctx.OS != "" && ctx.OS != "linux" && ctx.OS != "macos" {
+			t.Errorf("%s: bad os %q", ctx.ID, ctx.OS)
+		}
+		seen := map[int]bool{}
+		for _, e := range ctx.Codes {
+			t.Run(ctx.ID+"/"+itoa(e.Code), func(t *testing.T) {
+				checkEntry(t, e)
+				if seen[e.Code] {
+					t.Fatalf("duplicate code %d", e.Code)
+				}
+				seen[e.Code] = true
+				for _, osName := range []string{"linux", "macos"} {
+					x := d.Explain(e.Code, osName, ctx.ID)
+					if x.Source != ctx.ID || x.Meaning != e.Meaning {
+						t.Errorf("Explain(%d, %s) = %s %q, want %q", e.Code, ctx.ID, x.Source, x.Meaning, e.Meaning)
+					}
+					if e.Signal && x.Signal == nil {
+						t.Errorf("code %d is marked as a signal but %d is not a %s signal", e.Code, e.Code-128, x.OS)
+					}
+				}
+			})
 		}
 	}
 }

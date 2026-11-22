@@ -36,6 +36,36 @@
       ]
     }
   ],
+  "contexts": [
+    {
+      "id": "docker",
+      "title": "Docker",
+      "os": "linux",
+      "codes": [
+        {"code": 1, "meaning": "the container's main process exited with an error", "hints": ["Read its output with `docker logs <container>`."]},
+        {"code": 125, "meaning": "the docker command itself failed, so the container never started", "hints": ["Read the error printed above it: a bad flag, a missing image or a daemon problem.", "Check that the daemon is up with `docker info`."]},
+        {"code": 126, "meaning": "the container's command was found but could not be run", "hints": ["Check the execute bit and the shebang line of the entrypoint in the image.", "`docker inspect <container> --format '{{.State.Error}}'` shows the daemon's message."]},
+        {"code": 127, "meaning": "the container's command was not found in the image", "hints": ["Check the CMD and ENTRYPOINT paths; `docker run -it --entrypoint sh <image>` lets you look around.", "`docker inspect <container> --format '{{.Config.Cmd}}'` shows what it tried to run."]},
+        {"code": 137, "signal": true, "meaning": "the container was killed, often for running out of memory", "hints": ["Run `docker inspect <container> --format '{{.State.OOMKilled}}'`; true means it hit its memory limit.", "If false, `docker stop` timed out waiting or something ran `docker kill`."]},
+        {"code": 139, "signal": true, "meaning": "the container's process crashed with a segmentation fault", "hints": ["Check `docker logs <container>`; an image built for another CPU architecture can also do this."]},
+        {"code": 143, "signal": true, "meaning": "the container was asked to stop, usually by `docker stop`", "hints": ["This is a clean shutdown if you stopped it; `docker events` shows who did."]}
+      ]
+    },
+    {
+      "id": "k8s",
+      "title": "Kubernetes",
+      "os": "linux",
+      "codes": [
+        {"code": 1, "meaning": "the container's process exited with an error", "hints": ["Read the logs of the failed run with `kubectl logs <pod> --previous`."]},
+        {"code": 126, "meaning": "the container's command was found but could not be run", "hints": ["Check the image's entrypoint permissions; `kubectl describe pod <pod>` shows the runtime's message."]},
+        {"code": 127, "meaning": "the container's command was not found in the image", "hints": ["Check `command` and `args` in the pod spec against the image's paths."]},
+        {"code": 134, "signal": true, "meaning": "the container's process aborted, often a failed assertion or a runtime panic", "hints": ["Check `kubectl logs <pod> --previous` for the last messages before the abort."]},
+        {"code": 137, "signal": true, "meaning": "the container was killed: OOMKilled, or it ignored SIGTERM past the grace period", "hints": ["Run `kubectl describe pod <pod>` and look for `Reason: OOMKilled` under Last State.", "If it was not OOMKilled, handle SIGTERM or raise terminationGracePeriodSeconds."]},
+        {"code": 139, "signal": true, "meaning": "the container's process crashed with a segmentation fault", "hints": ["Check `kubectl logs <pod> --previous`, and that the image matches the node's CPU architecture."]},
+        {"code": 143, "signal": true, "meaning": "the container was asked to stop: a normal shutdown, an eviction or a failed liveness probe", "hints": ["Check `kubectl get events --field-selector involvedObject.name=<pod>` for the reason."]}
+      ]
+    }
+  ],
   "signals": [
     {"name": "SIGHUP", "linux": 1, "macos": 1, "meaning": "hangup: the terminal closed or the session ended", "hints": ["Run long jobs under nohup, tmux or a service manager."]},
     {"name": "SIGINT", "linux": 2, "macos": 2, "meaning": "interrupted, usually by Ctrl+C", "hints": ["Nothing failed by itself; the command was stopped from the keyboard."]},

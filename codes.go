@@ -23,8 +23,10 @@ type Entry struct {
 
 // Table groups the codes of one source, such as the shell or a tool.
 type Table struct {
-	ID    string  `json:"id"`
-	Title string  `json:"title"`
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	// OS fixes the signal numbering, e.g. containers always run Linux.
+	OS    string  `json:"os,omitempty"`
 	Codes []Entry `json:"codes"`
 }
 
@@ -40,8 +42,9 @@ type Signal struct {
 
 // Data is the parsed contents of codes.json.
 type Data struct {
-	Tables  []Table  `json:"tables"`
-	Signals []Signal `json:"signals"`
+	Tables   []Table  `json:"tables"`
+	Contexts []Table  `json:"contexts"`
+	Signals  []Signal `json:"signals"`
 }
 
 // SignalRef names the signal behind a 128+N code.
@@ -54,6 +57,7 @@ type SignalRef struct {
 type Explanation struct {
 	Code    int        `json:"code"`
 	Source  string     `json:"source"`
+	Context string     `json:"context,omitempty"`
 	OS      string     `json:"os"`
 	Name    string     `json:"name,omitempty"`
 	Signal  *SignalRef `json:"signal,omitempty"`
@@ -105,13 +109,40 @@ func (t *Table) find(code int) *Entry {
 	return nil
 }
 
-// Explain looks code up in the general tables, then as 128+N.
-func (d *Data) Explain(code int, osName string) Explanation {
-	x := Explanation{Code: code, OS: osName}
+// Context returns the context table with the given id, or nil.
+func (d *Data) Context(id string) *Table {
+	for i := range d.Contexts {
+		if d.Contexts[i].ID == id {
+			return &d.Contexts[i]
+		}
+	}
+	return nil
+}
+
+// ContextIDs lists the valid --context values.
+func (d *Data) ContextIDs() []string {
+	ids := make([]string, len(d.Contexts))
+	for i, t := range d.Contexts {
+		ids[i] = t.ID
+	}
+	return ids
+}
+
+// Explain looks code up in the context table (if any), then in the
+// general tables, then as 128+N.
+func (d *Data) Explain(code int, osName, context string) Explanation {
+	tables := d.Tables
+	if ctx := d.Context(context); ctx != nil {
+		tables = append([]Table{*ctx}, tables...)
+		if ctx.OS != "" {
+			osName = ctx.OS
+		}
+	}
+	x := Explanation{Code: code, Context: context, OS: osName}
 	sig := d.signal(code-128, osName)
-	for i := range d.Tables {
-		if e := d.Tables[i].find(code); e != nil {
-			x.Source, x.Name, x.Meaning, x.Hints = d.Tables[i].ID, e.Name, e.Meaning, e.Hints
+	for _, t := range tables {
+		if e := t.find(code); e != nil {
+			x.Source, x.Name, x.Meaning, x.Hints = t.ID, e.Name, e.Meaning, e.Hints
 			if e.Signal && sig != nil {
 				x.Signal = &SignalRef{Number: code - 128, Name: sig.Name}
 			}

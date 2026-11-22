@@ -37,6 +37,11 @@ func TestRun(t *testing.T) {
 		{[]string{"--", "-1"}, 0, "255: exit status out of range"},
 		{[]string{"127", "--os", "macos"}, 0, "127: command not found"},
 		{[]string{"1", "2"}, 2, ""},
+		{[]string{"--context", "docker", "137"}, 0, "docker: 137 = 128 + 9 (SIGKILL): the container was killed"},
+		{[]string{"--context", "docker", "--os", "macos", "143"}, 0, "docker: 143 = 128 + 15 (SIGTERM)"},
+		{[]string{"--context", "docker", "2"}, 0, "2: misuse"},
+		{[]string{"--context", "k8s", "137"}, 0, "k8s: 137 = 128 + 9 (SIGKILL)"},
+		{[]string{"--context", "nope", "1"}, 2, ""},
 		{[]string{"abc"}, 2, ""},
 		{[]string{}, 2, ""},
 	}
